@@ -69,25 +69,58 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const newUser = { email };
+    let emailExists = false;
+    let list_num = 0;
 
-    users.push(newUser);
+    for (let i = 0; i < users.length; i++) {
+        if (users[i].email === email) {
+            emailExists = true;
+            list_num = i;
+            break;
+        }
+    }
 
-    const refreshToken = crypto.randomBytes(64).toString("hex");
-    newUser.refreshToken = refreshToken;
-    const accessToken = jwt.sign(
-      { email: user.email },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1m",
-      }
-    );
+    if (emailExists) {
+        const refreshToken = crypto.randomBytes(64).toString("hex");
+        users[list_num].refreshToken = refreshToken;
+        const accessToken = jwt.sign(
+        { email: user.email },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: "1m",
+        }
+        );
+        users[list_num].accessToken = accessToken;
 
-    let today = new Date();
+        let today = new Date();
 
-    await query('UPDATE USER SET ACCESS_TOKEN = ?, REFRESH_TOKEN = ?, LAST_LOGIN = ? WHERE EMAIL = ?', [accessToken, refreshToken, today, email]);
+        await query('UPDATE USER SET ACCESS_TOKEN = ?, REFRESH_TOKEN = ?, LAST_LOGIN = ? WHERE EMAIL = ?', [accessToken, refreshToken, today, email]);
 
-    res.json({ message: "Logged in successfully", accessToken, refreshToken, user });
+        res.json({ message: "Logged in successfully", accessToken, refreshToken, user });
+    } else {
+        const newUser = { email };
+
+        users.push(newUser);
+
+        const refreshToken = crypto.randomBytes(64).toString("hex");
+        newUser.refreshToken = refreshToken;
+        const accessToken = jwt.sign(
+        { email: user.email },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: "1m",
+        }
+        );
+        newUser.accessToken = accessToken;
+
+        let today = new Date();
+
+        await query('UPDATE USER SET ACCESS_TOKEN = ?, REFRESH_TOKEN = ?, LAST_LOGIN = ? WHERE EMAIL = ?', [accessToken, refreshToken, today, email]);
+
+        res.json({ message: "Logged in successfully", accessToken, refreshToken, user });
+    }
+
+    
   } catch (e) {
     console.log(e.message);
   }
