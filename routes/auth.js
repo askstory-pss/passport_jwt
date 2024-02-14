@@ -29,8 +29,6 @@ router.post("/register", async (req, res) => {
     if(hp === "") hp = null;
     if(duty === "") duty = null;
 
-    // subject = 1 // 부서ID 임시 처리
-
     let today = new Date();
 
     const hashedPassword = await bcrypt.hash(pw, 10);
@@ -49,6 +47,9 @@ router.post("/register", async (req, res) => {
 });
 
 // 로그인
+
+// 추가 예정
+// CAN_LOG, SHOULD_CHANGE_PW
 router.post("/login", async (req, res) => {
   try {
     const { email, pw } = req.body;
@@ -82,7 +83,9 @@ router.post("/login", async (req, res) => {
       }
     );
 
-    await query('UPDATE USER SET ACCESS_TOKEN = ?, REFRESH_TOKEN = ? WHERE EMAIL = ?', [accessToken, refreshToken, email]);
+    let today = new Date();
+
+    await query('UPDATE USER SET ACCESS_TOKEN = ?, REFRESH_TOKEN = ?, LAST_LOGIN = ? WHERE EMAIL = ?', [accessToken, refreshToken, today, email]);
 
     res.json({ message: "Logged in successfully", accessToken, refreshToken, user });
   } catch (e) {
